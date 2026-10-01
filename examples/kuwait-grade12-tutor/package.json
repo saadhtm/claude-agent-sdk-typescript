@@ -1,0 +1,22 @@
+{
+  "name": "claude-agent-sdk-example-kuwait-grade12-tutor",
+  "private": true,
+  "version": "0.0.0",
+  "description": "مُعين: بوت تعليمي لجميع مواد الصف الثاني عشر في المدارس الحكومية الكويتية، مبني على Claude Agent SDK (مثال، غير منشور)",
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/server.ts",
+    "cli": "tsx src/cli.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "latest",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.0.0"
+  },
+  "license": "MIT"
+}

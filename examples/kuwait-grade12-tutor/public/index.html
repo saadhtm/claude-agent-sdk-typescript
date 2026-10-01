@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>مُعين — بوت الصف الثاني عشر</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f6f7f4; --surface: #ffffff; --surface-2: #eef1ec; --text: #1c2420; --muted: #5d6b63;
+    --border: #d9dfd9; --accent: #00703c; --accent-ink: #ffffff; --accent-soft: #e2f1e8;
+    --warn: #b3261e; --radius: 14px; --shadow: 0 1px 2px rgb(0 0 0 / .05), 0 4px 16px rgb(0 0 0 / .05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #111613; --surface: #19201c; --surface-2: #212a25; --text: #e8eee9; --muted: #9aaba1;
+      --border: #2f3a34; --accent: #3fbf7f; --accent-ink: #0b1a12; --accent-soft: #1d3327; --warn: #ff8a80; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Tajawal', system-ui, sans-serif; font-size: 17px; line-height: 1.75; }
+  header { background: var(--surface); border-bottom: 1px solid var(--border); }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
+  .brand { display: flex; align-items: center; gap: 12px; padding: 16px 0 8px; }
+  .logo { width: 42px; height: 42px; border-radius: 12px; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font-weight: 800; font-size: 22px; }
+  .brand h1 { margin: 0; font-size: 22px; }
+  .brand p { margin: 0; color: var(--muted); font-size: 14px; }
+  nav { display: flex; gap: 4px; overflow-x: auto; }
+  nav button { background: none; border: 0; border-bottom: 3px solid transparent; color: var(--muted); padding: 10px 14px; font: inherit; font-weight: 700; cursor: pointer; white-space: nowrap; }
+  nav button[aria-selected="true"] { color: var(--accent); border-color: var(--accent); }
+  main { padding: 20px 0 48px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px; }
+  .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+  label { display: block; font-size: 14px; color: var(--muted); margin-bottom: 4px; font-weight: 500; }
+  select, input, textarea { width: 100%; font: inherit; color: var(--text); background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; padding: 9px 12px; }
+  .tasks { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-top: 16px; }
+  .task { text-align: right; background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; font: inherit; color: var(--text); cursor: pointer; }
+  .task strong { display: block; font-size: 16px; }
+  .task span { font-size: 13px; color: var(--muted); }
+  .task:hover, .task:focus-visible { border-color: var(--accent); background: var(--accent-soft); }
+  .btn { font: inherit; font-weight: 700; border-radius: 10px; padding: 8px 14px; cursor: pointer; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .btn:disabled { opacity: .5; cursor: default; }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 18px 0 10px; }
+  .toolbar .title { font-weight: 800; margin-inline-end: auto; }
+  .status { color: var(--muted); font-size: 14px; }
+  .doc { min-height: 120px; overflow-wrap: anywhere; }
+  .doc h1, .doc h2, .doc h3 { line-height: 1.4; margin: 1.2em 0 .4em; }
+  .doc h2 { font-size: 21px; color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+  .doc h3 { font-size: 18px; }
+  .doc table { border-collapse: collapse; width: 100%; margin: 10px 0; display: block; overflow-x: auto; }
+  .doc th, .doc td { border: 1px solid var(--border); padding: 6px 10px; text-align: right; vertical-align: top; }
+  .doc th { background: var(--surface-2); }
+  .doc code { background: var(--surface-2); padding: 1px 6px; border-radius: 6px; direction: ltr; unicode-bidi: isolate; }
+  .doc hr { border: 0; border-top: 2px dashed var(--border); margin: 24px 0; }
+  .empty { color: var(--muted); text-align: center; padding: 40px 0; }
+  .error { color: var(--warn); font-weight: 700; }
+  [hidden] { display: none !important; }
+
+  /* النافذة الصوتية */
+  .voice { display: grid; gap: 16px; grid-template-columns: 1fr; }
+  @media (min-width: 820px) { .voice { grid-template-columns: 300px 1fr; } }
+  .mic-panel { display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; }
+  .mic { width: 132px; height: 132px; border-radius: 50%; border: 0; background: var(--accent); color: var(--accent-ink); cursor: pointer; display: grid; place-items: center; box-shadow: 0 0 0 0 var(--accent-soft); transition: transform .15s; }
+  .mic svg { width: 54px; height: 54px; }
+  .mic.listening { animation: pulse 1.4s infinite; }
+  .mic.speaking { background: var(--surface-2); color: var(--accent); outline: 3px solid var(--accent); }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 var(--accent-soft); } 70% { box-shadow: 0 0 0 26px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+  @media (prefers-reduced-motion: reduce) { .mic.listening { animation: none; outline: 4px solid var(--accent-soft); } }
+  .mic-state { font-weight: 700; min-height: 1.7em; }
+  .chat { display: flex; flex-direction: column; gap: 10px; max-height: 60vh; overflow-y: auto; padding: 4px; }
+  .bubble { padding: 10px 14px; border-radius: 14px; max-width: 88%; white-space: pre-wrap; }
+  .bubble.me { align-self: flex-start; background: var(--accent-soft); }
+  .bubble.bot { align-self: flex-end; background: var(--surface-2); }
+  .ask-row { display: flex; gap: 8px; margin-top: 12px; }
+  .ask-row input { flex: 1; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+  .chip { font: inherit; font-size: 13px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); border-radius: 999px; padding: 4px 10px; cursor: pointer; }
+  .row { display: flex; gap: 8px; align-items: center; width: 100%; }
+  .row label { margin: 0; white-space: nowrap; }
+
+  @media print {
+    header, .no-print, .toolbar { display: none !important; }
+    body { background: #fff; color: #000; font-size: 14px; }
+    .card { border: 0; box-shadow: none; padding: 0; }
+    .doc h2 { color: #000; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">م</div>
+      <div>
+        <h1>مُعين — بوت الصف الثاني عشر</h1>
+        <p>شرح وتلخيص ومراجعات واختبارات لجميع المواد · المدارس الحكومية بدولة الكويت</p>
+      </div>
+    </div>
+    <nav role="tablist">
+      <button role="tab" aria-selected="true" data-tab="study">📚 الدروس والأوراق</button>
+      <button role="tab" aria-selected="false" data-tab="voice">🎙️ النافذة الصوتية</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- تبويب الدروس والأوراق -->
+  <section id="tab-study">
+    <div class="card no-print">
+      <div class="grid">
+        <div><label for="track">القسم</label>
+          <select id="track"><option value="علمي">علمي</option><option value="أدبي">أدبي</option></select></div>
+        <div><label for="subject">المادة</label><select id="subject"></select></div>
+        <div><label for="term">الفصل / الأسبوع</label>
+          <div class="row">
+            <select id="term"><option value="1">الفصل الأول</option><option value="2">الفصل الثاني</option></select>
+            <select id="week" aria-label="الأسبوع"></select>
+          </div></div>
+        <div><label for="unit">الوحدة</label><select id="unit"></select></div>
+      </div>
+      <div style="margin-top:12px"><label for="note">ملاحظة اختيارية (مثال: ركّز على المسائل، أو أريد شرحاً أبسط)</label>
+        <input id="note" maxlength="300" placeholder="اكتب طلبك الخاص هنا…"></div>
+      <div class="tasks">
+        <button class="task" data-kind="explain"><strong>📖 تلخيص وشرح</strong><span>شرح مبسط للوحدة مع أمثلة وخلاصة</span></button>
+        <button class="task" data-kind="daily"><strong>🗓️ ورقة مراجعة يومية</strong><span>15 دقيقة: أفكار + تدريبات + إجابات</span></button>
+        <button class="task" data-kind="weekly-notes"><strong>📒 مذكرة أسبوعية</strong><span>خريطة الوحدة وجداول وأسئلة متوقعة</span></button>
+        <button class="task" data-kind="weekly-test"><strong>📝 اختبار أسبوعي</strong><span>ورقة على نمط الوزارة مع نموذج الإجابة</span></button>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <span class="title" id="doc-title">النتيجة</span>
+      <span class="status" id="doc-status" role="status"></span>
+      <button class="btn" id="btn-listen" disabled>🔊 استمع</button>
+      <button class="btn" id="btn-copy" disabled>📋 نسخ</button>
+      <button class="btn" id="btn-print" disabled>🖨️ طباعة / PDF</button>
+      <button class="btn" id="btn-stop" hidden>⏹ إيقاف</button>
+    </div>
+    <article class="card doc" id="doc"><p class="empty">اختر المادة والوحدة ثم اضغط على المهمة المطلوبة.</p></article>
+  </section>
+
+  <!-- تبويب النافذة الصوتية -->
+  <section id="tab-voice" hidden>
+    <div class="voice">
+      <div class="card mic-panel">
+        <div style="width:100%"><label for="v-subject">المادة</label><select id="v-subject"><option value="">كل المواد</option></select></div>
+        <button class="mic" id="mic" aria-label="اضغط وتحدث">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5M8 22h8"/></svg>
+        </button>
+        <div class="mic-state" id="mic-state" role="status">اضغط على الميكروفون واسأل</div>
+        <div class="row"><label for="rate">سرعة القراءة</label><input type="range" id="rate" min="0.6" max="1.4" step="0.1" value="0.95"></div>
+        <div style="width:100%"><label for="voice-pick">الصوت</label><select id="voice-pick"></select></div>
+        <label class="row" style="justify-content:center"><input type="checkbox" id="auto" style="width:auto"> محادثة مستمرة (يستمع بعد كل رد)</label>
+        <div class="chips" id="chips"></div>
+        <button class="btn" id="v-reset">🔄 محادثة جديدة</button>
+        <p class="status" id="v-support"></p>
+      </div>
+      <div class="card">
+        <div class="chat" id="chat" aria-live="polite">
+          <div class="bubble bot">أهلاً بك! أنا مُعين، معلمك الصوتي. اسألني عن أي درس في الصف الثاني عشر، مثل: "اشرح لي قانون كولوم" أو "ما الفرق بين التشبيه والاستعارة؟"</div>
+        </div>
+        <form class="ask-row" id="ask-form">
+          <input id="ask-input" placeholder="أو اكتب سؤالك هنا…" autocomplete="off">
+          <button class="btn primary" type="submit">إرسال</button>
+        </form>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = s => document.querySelector(s)
+const WEEKS = 16
+let SUBJECTS = []
+
+/* ---------- عارض Markdown مبسط ---------- */
+function esc(s) { return s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])) }
+function inline(s) {
+  return esc(s)
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>')
+}
+function md(src) {
+  const lines = src.replace(/\r/g, '').split('\n')
+  let html = '', list = null, para = []
+  const flushPara = () => { if (para.length) { html += `<p>${para.map(inline).join('<br>')}</p>`; para = [] } }
+  const flushList = () => { if (list) { html += `</${list}>`; list = null } }
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i], t = line.trim()
+    let m
+    if (!t) { flushPara(); flushList(); continue }
+    if ((m = t.match(/^(#{1,4})\s+(.*)$/))) { flushPara(); flushList(); const n = Math.max(2, m[1].length); html += `<h${n}>${inline(m[2])}</h${n}>`; continue }
+    if (/^(-{3,}|\*{3,}|_{3,})$/.test(t)) { flushPara(); flushList(); html += '<hr>'; continue }
+    if (t.startsWith('|') && i + 1 < lines.length && /^\|?\s*:?-{2,}/.test(lines[i + 1].trim())) {
+      flushPara(); flushList()
+      const cells = r => r.trim().replace(/^\||\|$/g, '').split('|').map(c => inline(c.trim()))
+      html += '<table><thead><tr>' + cells(t).map(c => `<th>${c}</th>`).join('') + '</tr></thead><tbody>'
+      i += 2
+      while (i < lines.length && lines[i].trim().startsWith('|')) { html += '<tr>' + cells(lines[i]).map(c => `<td>${c}</td>`).join('') + '</tr>'; i++ }
+      i--; html += '</tbody></table>'; continue
+    }
+    if ((m = t.match(/^[-*•]\s+(.*)$/)) || (m = t.match(/^(\d+)[.)]\s+(.*)$/))) {
+      flushPara()
+      const kind = /^\d/.test(t) ? 'ol' : 'ul'
+      if (list !== kind) { flushList(); html += `<${kind}>`; list = kind }
+      html += `<li>${inline(m[m.length - 1])}</li>`; continue
+    }
+    flushList(); para.push(t)
+  }
+  flushPara(); flushList()
+  return html
+}
+function plain(src) { return src.replace(/[#*`|>_]/g, ' ').replace(/-{3,}/g, ' ').replace(/[\u{1F300}-\u{1FAFF}☀-➿️]/gu, '').replace(/[ \t]+/g, ' ') }
+
+/* ---------- البث من الخادم ---------- */
+async function streamPost(url, body, onEvent, signal) {
+  const res = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body), signal })
+  if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || res.statusText) }
+  const reader = res.body.getReader(), dec = new TextDecoder()
+  let buf = ''
+  for (;;) {
+    const { value, done } = await reader.read()
+    if (done) break
+    buf += dec.decode(value, { stream: true })
+    let idx
+    while ((idx = buf.indexOf('\n\n')) >= 0) {
+      const chunk = buf.slice(0, idx); buf = buf.slice(idx + 2)
+      if (chunk.startsWith('data: ')) onEvent(JSON.parse(chunk.slice(6)))
+    }
+  }
+}
+
+/* ---------- التبويبات ---------- */
+document.querySelectorAll('nav button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('nav button').forEach(x => x.setAttribute('aria-selected', x === b))
+  $('#tab-study').hidden = b.dataset.tab !== 'study'
+  $('#tab-voice').hidden = b.dataset.tab !== 'voice'
+})
+
+/* ---------- اختيار المادة والوحدة ---------- */
+function opt(value, text) { const o = document.createElement('option'); o.value = value; o.textContent = text; return o }
+function currentSubject() { return SUBJECTS.find(s => s.id === $('#subject').value) }
+function fillSubjects() {
+  const track = $('#track').value
+  $('#subject').replaceChildren(...SUBJECTS.filter(s => s.track === track || s.track === 'مشترك').map(s => opt(s.id, s.name)))
+  fillUnits()
+}
+function fillUnits() {
+  const s = currentSubject(); if (!s) return
+  $('#unit').replaceChildren(...s.units.map(u => opt(u.id, `${u.title} (ف${u.term})`)))
+  pickUnitForWeek()
+}
+function pickUnitForWeek() {
+  const s = currentSubject(); if (!s) return
+  const term = Number($('#term').value), week = Number($('#week').value)
+  const units = s.units.filter(u => u.term === term)
+  const u = units[Math.min(Math.floor((week - 1) * units.length / WEEKS), units.length - 1)]
+  if (u) $('#unit').value = u.id
+}
+for (let w = 1; w <= WEEKS; w++) $('#week').append(opt(w, `الأسبوع ${w}`))
+$('#track').onchange = () => { save(); fillSubjects() }
+$('#subject').onchange = () => { save(); fillUnits() }
+$('#term').onchange = $('#week').onchange = () => { save(); pickUnitForWeek() }
+function save() { try { localStorage.setItem('muin', JSON.stringify({ track: $('#track').value, subject: $('#subject').value, term: $('#term').value, week: $('#week').value })) } catch {} }
+function restore() { try { return JSON.parse(localStorage.getItem('muin') || '{}') } catch { return {} } }
+
+/* ---------- المهام الأربع ---------- */
+let docText = '', docAbort = null, TASKS = {}
+async function runTask(kind) {
+  const s = currentSubject(), unitId = $('#unit').value
+  const unit = s?.units.find(u => u.id === unitId); if (!unit) return
+  docAbort?.abort(); docAbort = new AbortController()
+  docText = ''
+  $('#doc-title').textContent = `${TASKS[kind]} — ${s.name} / ${unit.title}`
+  $('#doc').innerHTML = '<p class="empty">⏳ يجري الإعداد…</p>'
+  $('#doc-status').textContent = 'يكتب الآن…'
+  $('#btn-stop').hidden = false
+  for (const b of ['#btn-listen', '#btn-copy', '#btn-print']) $(b).disabled = true
+  try {
+    await streamPost('/api/task', { kind, unitId, note: $('#note').value }, e => {
+      if (e.type === 'text') { docText += e.text; $('#doc').innerHTML = md(docText) }
+      if (e.type === 'error') $('#doc').insertAdjacentHTML('beforeend', `<p class="error">${esc(e.message)}</p>`)
+    }, docAbort.signal)
+    $('#doc-status').textContent = '✅ جاهز'
+  } catch (err) {
+    if (err.name !== 'AbortError') { $('#doc-status').textContent = ''; $('#doc').insertAdjacentHTML('beforeend', `<p class="error">تعذّر الاتصال: ${esc(err.message)}</p>`) }
+    else $('#doc-status').textContent = 'أُوقف'
+  } finally {
+    $('#btn-stop').hidden = true
+    for (const b of ['#btn-listen', '#btn-copy', '#btn-print']) $(b).disabled = !docText
+  }
+}
+document.querySelectorAll('.task').forEach(b => b.onclick = () => runTask(b.dataset.kind))
+$('#btn-stop').onclick = () => docAbort?.abort()
+$('#btn-print').onclick = () => window.print()
+$('#btn-copy').onclick = async () => { await navigator.clipboard.writeText(docText); $('#doc-status').textContent = 'نُسخ ✓' }
+$('#btn-listen').onclick = () => { if (speechSynthesis.speaking) { speechSynthesis.cancel(); return } speak(plain(docText)) }
+
+/* ---------- الصوت: النطق ---------- */
+const synth = window.speechSynthesis
+let arabicVoices = []
+function loadVoices() {
+  if (!synth) return
+  arabicVoices = synth.getVoices().filter(v => v.lang.toLowerCase().startsWith('ar'))
+  const pick = $('#voice-pick'), prev = pick.value
+  pick.replaceChildren(...(arabicVoices.length ? arabicVoices.map(v => opt(v.name, `${v.name} (${v.lang})`)) : [opt('', 'الصوت الافتراضي')]))
+  if (prev) pick.value = prev
+}
+if (synth) { loadVoices(); synth.onvoiceschanged = loadVoices }
+
+/** يقسم النص إلى جمل لأن بعض المتصفحات تقطع الجمل الطويلة */
+function speak(text, onEnd) {
+  if (!synth) { onEnd?.(); return }
+  synth.cancel()
+  const parts = text.split(/(?<=[.!؟?،:\n])\s+/).map(s => s.trim()).filter(Boolean)
+  const chunks = []
+  for (const p of parts) { if (chunks.length && (chunks.at(-1) + ' ' + p).length < 220) chunks[chunks.length - 1] += ' ' + p; else chunks.push(p) }
+  const voice = arabicVoices.find(v => v.name === $('#voice-pick').value) || arabicVoices[0]
+  chunks.forEach((c, i) => {
+    const u = new SpeechSynthesisUtterance(c)
+    u.lang = voice?.lang || 'ar-SA'; if (voice) u.voice = voice
+    u.rate = Number($('#rate').value)
+    if (i === chunks.length - 1) u.onend = () => onEnd?.()
+    synth.speak(u)
+  })
+  if (!chunks.length) onEnd?.()
+}
+
+/* ---------- النافذة الصوتية: الاستماع والمحادثة ---------- */
+const Rec = window.SpeechRecognition || window.webkitSpeechRecognition
+let rec = null, sessionId = '', busy = false, voiceAbort = null
+const mic = $('#mic'), state = $('#mic-state')
+function setState(mode, msg) { mic.classList.toggle('listening', mode === 'listening'); mic.classList.toggle('speaking', mode === 'speaking'); state.textContent = msg }
+
+if (Rec) {
+  rec = new Rec()
+  rec.lang = 'ar-KW'; rec.interimResults = true; rec.continuous = false
+  let finalText = ''
+  rec.onstart = () => { finalText = ''; setState('listening', '🎧 أستمع إليك… تحدث الآن') }
+  rec.onresult = e => {
+    let interim = ''
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) finalText += e.results[i][0].transcript; else interim += e.results[i][0].transcript
+    }
+    state.textContent = '🎧 ' + (finalText + interim)
+  }
+  rec.onerror = e => setState('', e.error === 'not-allowed' ? '⚠️ اسمح للمتصفح باستخدام الميكروفون' : e.error === 'no-speech' ? 'لم أسمع شيئاً، حاول مجدداً' : 'حدث خطأ في الاستماع: ' + e.error)
+  rec.onend = () => { if (finalText.trim()) askVoice(finalText.trim()); else if (!busy) setState('', state.textContent.startsWith('🎧') ? 'اضغط على الميكروفون واسأل' : state.textContent) }
+} else {
+  $('#v-support').textContent = 'متصفحك لا يدعم التعرف على الكلام. استخدم Google Chrome أو Edge، أو اكتب سؤالك.'
+}
+if (!synth) $('#v-support').textContent += ' متصفحك لا يدعم القراءة الصوتية.'
+
+function listen() { if (!rec || busy) return; synth?.cancel(); try { rec.start() } catch {} }
+mic.onclick = () => {
+  if (busy) { voiceAbort?.abort(); synth?.cancel(); busy = false; setState('', 'أُوقف. اضغط لسؤال جديد'); return }
+  if (synth?.speaking) { synth.cancel(); setState('', 'اضغط على الميكروفون واسأل'); return }
+  if (mic.classList.contains('listening')) { rec?.stop(); return }
+  listen()
+}
+
+function bubble(cls, text) { const d = document.createElement('div'); d.className = 'bubble ' + cls; d.textContent = text; $('#chat').append(d); $('#chat').scrollTop = $('#chat').scrollHeight; return d }
+
+async function askVoice(question) {
+  if (busy) return
+  busy = true
+  bubble('me', question)
+  const b = bubble('bot', '…')
+  let answer = ''
+  setState('speaking', '💭 أفكر في الإجابة…')
+  voiceAbort = new AbortController()
+  try {
+    await streamPost('/api/voice', { question, subjectId: $('#v-subject').value, sessionId }, e => {
+      if (e.type === 'session') sessionId = e.sessionId
+      if (e.type === 'text') { answer += e.text; b.textContent = answer.trim(); $('#chat').scrollTop = $('#chat').scrollHeight }
+      if (e.type === 'error') b.textContent += '\n⚠️ ' + e.message
+    }, voiceAbort.signal)
+  } catch (err) {
+    if (err.name !== 'AbortError') b.textContent = '⚠️ تعذّر الاتصال: ' + err.message
+    busy = false; return
+  }
+  busy = false
+  if (!answer.trim()) { setState('', 'اضغط على الميكروفون واسأل'); return }
+  setState('speaking', '🔊 أقرأ الإجابة… (اضغط للإيقاف)')
+  speak(plain(answer), () => {
+    setState('', 'اضغط على الميكروفون واسأل')
+    if ($('#auto').checked) listen()
+  })
+}
+
+$('#ask-form').onsubmit = e => { e.preventDefault(); const q = $('#ask-input').value.trim(); if (q) { $('#ask-input').value = ''; askVoice(q) } }
+$('#v-reset').onclick = () => { sessionId = ''; synth?.cancel(); $('#chat').replaceChildren(); bubble('bot', 'بدأنا محادثة جديدة. ما الذي تريد مراجعته؟') }
+const SAMPLES = ['لخص لي درس اليوم', 'اسألني سؤالاً للمراجعة', 'اشرح بطريقة أبسط', 'أعطني طريقة للحفظ']
+$('#chips').replaceChildren(...SAMPLES.map(s => { const c = document.createElement('button'); c.className = 'chip'; c.textContent = s; c.onclick = () => askVoice(s); return c }))
+
+/* ---------- البدء ---------- */
+fetch('/api/curriculum').then(r => r.json()).then(data => {
+  SUBJECTS = data.subjects; TASKS = data.tasks
+  $('#v-subject').append(...SUBJECTS.map(s => opt(s.id, s.name)))
+  const saved = restore()
+  if (saved.track) $('#track').value = saved.track
+  if (saved.term) $('#term').value = saved.term
+  if (saved.week) $('#week').value = saved.week
+  fillSubjects()
+  if (saved.subject && SUBJECTS.some(s => s.id === saved.subject && [...$('#subject').options].some(o => o.value === s.id))) { $('#subject').value = saved.subject; fillUnits() }
+}).catch(() => { $('#doc').innerHTML = '<p class="error">تعذّر تحميل المنهج. تأكد من تشغيل الخادم.</p>' })
+</script>
+</body>
+</html>
